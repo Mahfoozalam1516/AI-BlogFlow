@@ -26,13 +26,13 @@ users_collection = db['users']    # Collection for users
 
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-# HIX API Configuration
-HIX_API_KEY = os.getenv("HIX_API_KEY")  # Store your HIX API key in .env
-HIX_API_ENDPOINT = "https://api.hix.ai/v1/humanize"  # Replace with actual HIX API endpoint
 
 # Two different models for different tasks
 blog_generation_model = genai.GenerativeModel("gemini-1.5-flash")
 grammar_improvement_model = genai.GenerativeModel("gemini-1.5-flash")
+
+# New humanization model
+humanization_model = genai.GenerativeModel("gemini-1.5-flash")
 
 # Login required decorator
 def login_required(f):
@@ -116,68 +116,6 @@ LOGIN_SIGNUP_TEMPLATE = '''
 </body>
 </html>
 '''
-
-def split_text_into_chunks(text, max_words=500):
-    words = text.split()
-    chunks = []
-    current_chunk = []
-    current_word_count = 0
-
-    for word in words:
-        current_chunk.append(word)
-        current_word_count += 1
-
-        if current_word_count >= max_words:
-            chunks.append(' '.join(current_chunk))
-            current_chunk = []
-            current_word_count = 0
-
-    if current_chunk:
-        chunks.append(' '.join(current_chunk))
-
-    return chunks
-
-def humanize_chunk(chunk, api_key=os.getenv("HIX_API_KEY")):
-    SUBMIT_URL = "https://bypass.hix.ai/api/hixbypass/v1/submit"
-    OBTAIN_URL = "https://bypass.hix.ai/api/hixbypass/v1/obtain"
-
-    headers = {
-        "api-key": api_key,
-        "Content-Type": "application/json"
-    }
-
-    submit_payload = {
-        "input": chunk,
-        "mode": "Balanced"
-    }
-
-    try:
-        submit_response = requests.post(SUBMIT_URL, json=submit_payload, headers=headers)
-        submit_response.raise_for_status()
-        submit_data = submit_response.json()
-
-        if submit_data.get('err_code') != 0:
-            print(f"Submission Error: {submit_data.get('err_msg', 'Unknown error')}")
-            return chunk
-
-        task_id = submit_data['data']['task_id']
-
-        max_attempts = 10
-        for _ in range(max_attempts):
-            time.sleep(2)
-            obtain_response = requests.get(OBTAIN_URL, params={"task_id": task_id}, headers=headers)
-            obtain_response.raise_for_status()
-            obtain_data = obtain_response.json()
-
-            if obtain_data.get('err_code') == 0 and obtain_data['data'].get('task_status'):
-                return obtain_data['data'].get('output', chunk)
-
-        print("Humanization task timed out")
-        return chunk
-
-    except Exception as e:
-        print(f"Humanization Error for chunk: {e}")
-        return chunk
 
 def humanize_with_gemini(text):
     """Humanize text using the Gemini API to make it appear more natural and bypass AI detectors."""
