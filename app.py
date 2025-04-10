@@ -118,22 +118,24 @@ LOGIN_SIGNUP_TEMPLATE = '''
 '''
 
 def humanize_with_gemini(text):
-    """Humanize text using the Gemini API to make it appear more natural and bypass AI detectors."""
+    """Aggressively humanize text using the Gemini API to make it sound highly natural and bypass AI detectors."""
     if not text or len(text.split()) < 50:
         return text
 
-    humanization_prompt = f"""Humanize the following text to make it sound more natural, conversational, and less like it was written by an AI. Focus on:
-    - Adding subtle imperfections (e.g., casual phrasing, slight tangents, or natural pauses)
-    - Varying sentence length and structure
-    - Incorporating a human-like tone with personality (e.g., a touch of humor, curiosity, or relatability)
-    - Avoiding overly polished or formulaic language
-    - Maintaining the original meaning and intent
-    - Ensuring it could pass AI detection tools by mimicking human writing quirks
+    humanization_prompt = f"""Aggressively humanize the following text to make it sound like it was written by a real person with personality, not an AI. Transform it to feel raw, unpolished, and deeply conversational. Focus on:
+    - Injecting a strong, relatable human voice with quirks (e.g., slang, exaggerations, or a touch of sarcasm)
+    - Adding deliberate imperfections (e.g., run-on sentences, random asides, or casual interjections like 'ugh,' 'seriously,' or 'you know')
+    - Mixing short, choppy sentences with longer, rambling ones for variety
+    - Throwing in emotional reactions (e.g., excitement, frustration, or curiosity) to break the robotic flow
+    - Avoiding stiff, formulaic phrasing—make it messy, lively, and unpredictable
+    - Going off on brief tangents that feel natural, then circling back
+    - Keeping the core meaning intact but rephrasing everything to sound like someone chatting with a friend
+    - Ensuring it could fool AI detection tools by ditching any trace of sterile, AI-like polish
 
     Original Text:
     {text}
 
-    Provide the humanized version of the text."""
+    Give me the aggressively humanized version—don’t hold back!"""
     
     try:
         response = humanization_model.generate_content(humanization_prompt)
