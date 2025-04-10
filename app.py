@@ -179,24 +179,36 @@ def humanize_chunk(chunk, api_key=os.getenv("HIX_API_KEY")):
         print(f"Humanization Error for chunk: {e}")
         return chunk
 
-def humanize_text(text, max_words=500):
+def humanize_with_gemini(text):
+    """Humanize text using the Gemini API to make it appear more natural and bypass AI detectors."""
     if not text or len(text.split()) < 50:
         return text
 
-    api_key = os.getenv("HIX_API_KEY")
-    if not api_key:
-        print("Error: HIX API Key not set in environment variables")
-        return text
+    humanization_prompt = f"""Humanize the following text to make it sound more natural, conversational, and less like it was written by an AI. Focus on:
+    - Adding subtle imperfections (e.g., casual phrasing, slight tangents, or natural pauses)
+    - Varying sentence length and structure
+    - Incorporating a human-like tone with personality (e.g., a touch of humor, curiosity, or relatability)
+    - Avoiding overly polished or formulaic language
+    - Maintaining the original meaning and intent
+    - Ensuring it could pass AI detection tools by mimicking human writing quirks
 
-    chunks = split_text_into_chunks(text, max_words)
-    humanized_chunks = [humanize_chunk(chunk, api_key) for chunk in chunks]
-    return ' '.join(humanized_chunks)
+    Original Text:
+    {text}
+
+    Provide the humanized version of the text."""
+    
+    try:
+        response = humanization_model.generate_content(humanization_prompt)
+        return response.text
+    except Exception as e:
+        print(f"Humanization error with Gemini API: {e}")
+        return text  # Return original text if humanization fails
 
 def improve_grammar_and_readability(content, primary_keywords, secondary_keywords):
     improvement_prompt = f"""Please review and improve the following text.
     Focus on:
     - Make sure the primary keywords are used only 4-5 times in whole blog: {primary_keywords}
-    - Make sure each secondary keyword is only used at least once in whole blog: {secondary_keywords}
+    - Make sure each secondary keyword is used at least once in whole blog: {secondary_keywords}
     - Correcting grammar and spelling errors
     - Enhancing sentence structure and flow
     - Improving clarity and readability
@@ -1177,7 +1189,7 @@ def humanize_blog():
     try:
         data = request.get_json()
         content = data.get('content', '')
-        humanized_content = humanize_text(content)
+        humanized_content = humanize_with_gemini(content)
         return jsonify({'humanized_content': humanized_content})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
